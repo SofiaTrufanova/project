@@ -50,10 +50,9 @@ def convert_to_embeddings(embedder, dataloader, device):
     with torch.no_grad():
         for index, batch in enumerate(dataloader):
             x, y = batch
-            embeddings = embedder(x.to(device)).detach().cpu()
 
             y_all.append(y.detach().cpu())
-            embeddings_all.append(embeddings)
+            embeddings_all.append(embedder(x.to(device)).detach().cpu())
         
     embeddings_all = torch.vstack(embeddings_all)
     y_all = torch.concat(y_all)
@@ -65,20 +64,17 @@ def convert_to_embeddings(embedder, dataloader, device):
 
 def train_infomax_embedder(infomax_embedder, train_dataloader, test_dataloader, device,
                            n_epochs=500,
-                           loss=torchkld.loss.NWJLoss(),
-                           marginalize="permute",
+                           loss=torchkld.loss.InfoNCELoss(),
+                           marginalize="product",
+                           optimizer_embedder_network=lambda params: torch.optim.Adam(params, lr=1.0e-3),
+                           optimizer_discriminator_network=lambda params: torch.optim.Adam(params, lr=1.0e-3),
                            callback: callable=None,
-                           embedder_network_lr=1.0e-3,
-                           discriminator_network_lr=1.0e-3,
                            distribution: str="normal"):
     
     history = defaultdict(lambda: defaultdict(list))
 
-    optimizer_embedder_network = torch.optim.SGD(infomax_embedder.embedder_network.parameters(), lr=embedder_network_lr, momentum=0.9, weight_decay=5.0e-4)
-    optimizer_discriminator_network = torch.optim.SGD(infomax_embedder.discriminator_network.parameters(), lr=discriminator_network_lr, momentum=0.9, weight_decay=5.0e-4)
-
-    #scheduler_embedder_network = torch.optim.lr_scheduler.LambdaLR(optimizer_embedder_network, lr_lambda=(lambda epoch : 0.99**epoch))
-    #scheduler_discriminator_network = torch.optim.lr_scheduler.LambdaLR(optimizer_discriminator_network, lr_lambda=(lambda epoch : 0.99**epoch))
+    optimizer_embedder_network = optimizer_embedder_network(infomax_embedder.embedder_network.parameters())
+    optimizer_discriminator_network = optimizer_discriminator_network(infomax_embedder.discriminator_network.parameters())
 
     step = 0
     for epoch in trange(n_epochs):        
@@ -93,6 +89,7 @@ def train_infomax_embedder(infomax_embedder, train_dataloader, test_dataloader, 
             x = x.to(device)
             
             _loss = loss(*infomax_embedder(x, marginalize=marginalize))
+            #_loss = loss(infomax_embedder(x, marginalize=False))
             _loss.backward()
 
             optimizer_embedder_network.step()
@@ -127,7 +124,8 @@ def train_infomax_embedder(infomax_embedder, train_dataloader, test_dataloader, 
             infomax_embedder.embedder_network.eval()
             
             x_lim = y_lim = (-3.0, 3.0) if distribution == "normal" else (-0.1, 1.1)
-            plot_embeddings(infomax_embedder.embedder_network(x).detach().cpu().numpy(), y.detach().cpu().numpy(), x_lim=x_lim, y_lim=y_lim)
+            x, y = next(iter(train_dataloader))
+            plot_embeddings(infomax_embedder.embedder_network(x.to(device)).detach().cpu().numpy(), y.detach().cpu().numpy(), x_lim=x_lim, y_lim=y_lim)
                 
             infomax_embedder.embedder_network.train()
 
@@ -149,7 +147,8 @@ def classification_callback(history, epoch, step, infomax_embedder, train_datalo
                                 "calinski_harabasz_score": calinski_harabasz_score,
                             },
                             classifiers={
-                                "logistic_regression": lambda: SGDClassifier(loss='log_loss'),
+                                #"logistic_regression": lambda: SGDClassifier(loss='log_loss'),
+                                "logistic_regression": LogisticRegression,
                                 "gaussian_naive_bayes": GaussianNB,
                                 "knn": KNeighborsClassifier,
                                 "mlp": lambda: MLPClassifier(alpha=1.0, max_iter=1000),

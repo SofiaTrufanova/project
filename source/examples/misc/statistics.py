@@ -24,7 +24,6 @@ class MultivariateNormalTests:
         return p_val#, not (p_val < self.alpha)  
 
 
-# для теста для многомерных равномерных
 class MultiariateUniformTests:
     def __init__(self, loc=0, scale=1, alpha=0.05):
         '''

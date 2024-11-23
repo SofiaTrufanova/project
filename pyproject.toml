@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "pytorch-infomax"
-version = "2024.04.1"
+version = "2024.11.1"
 dependencies = [
   "torch>=2.0.1",
 ]

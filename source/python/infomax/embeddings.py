@@ -19,7 +19,7 @@ class Embedder(torch.nn.Module):
         self.detach = detach
 
     def forward(self, x, marginalize: bool=True):       
-        embeddings = self.output_channel(self.embedder_network(x))
+        embeddings = self.output_channel(self.embedder_network(self.input_channel(x)))#x))
 
         if self.detach:
             with torch.no_grad():
@@ -27,7 +27,10 @@ class Embedder(torch.nn.Module):
         else:
             noisy_embeddings = self.embedder_network(self.input_channel(x))
 
-        T_joined   = self.discriminator_network(embeddings, noisy_embeddings)
-        T_marginal = self.discriminator_network(embeddings, noisy_embeddings, marginalize=marginalize)
-
-        return T_joined, T_marginal
+        T_joined = self.discriminator_network(embeddings, noisy_embeddings)
+        
+        if marginalize:
+            T_marginal = self.discriminator_network(embeddings, noisy_embeddings, marginalize=marginalize)
+            return T_joined, T_marginal
+        else:
+            return T_joined
