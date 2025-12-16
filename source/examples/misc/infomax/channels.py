@@ -147,6 +147,6 @@ class BoundedSupportUniformChannel(Channel):
 
     @property
     def capacity(self):
-        """ Asymptotic capacity of the channel. """
+        """ Capacity of the channel. """
         epsilon = 0.5 * self.p / (1.0 - self.p)
         return epsilon - math.log(2.0 * epsilon) if epsilon < 0.5 else 0.25 / epsilon

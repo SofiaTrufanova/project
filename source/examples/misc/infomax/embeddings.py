@@ -1,11 +1,11 @@
 import torch
-import torchkld
+import torchfd
 
 from . import channels
 
 
 class Embedder(torch.nn.Module):
-    def __init__(self, embedder_network: callable, discriminator_network: torchkld.mutual_information.MINE,
+    def __init__(self, embedder_network: callable, discriminator_network: torchfd.mutual_information.MINE,
                  input_channel: channels.Channel, output_channel: channels.Channel,
                  detach: bool=False) -> None:
         
@@ -19,7 +19,7 @@ class Embedder(torch.nn.Module):
         self.detach = detach
 
     def forward(self, x, marginalize: bool=True):       
-        embeddings = self.output_channel(self.embedder_network(self.input_channel(x)))#x))
+        embeddings = self.output_channel(self.embedder_network(self.input_channel(x)))
 
         if self.detach:
             with torch.no_grad():
@@ -27,10 +27,6 @@ class Embedder(torch.nn.Module):
         else:
             noisy_embeddings = self.embedder_network(self.input_channel(x))
 
-        T_joined = self.discriminator_network(embeddings, noisy_embeddings)
+        T_joined, T_marginal = self.discriminator_network(embeddings, noisy_embeddings)
         
-        if marginalize:
-            T_marginal = self.discriminator_network(embeddings, noisy_embeddings, marginalize=marginalize)
-            return T_joined, T_marginal
-        else:
-            return T_joined
+        return T_joined, T_marginal

@@ -1,19 +1,18 @@
 import math
 import torch
-import torchkld
+import torchfd
 import infomax
 
 
-class AdditiveGaussainT(torchkld.mutual_information.MINE):
-    def __init__(self, p: float=0.1) -> None:
-        super().__init__()
+class AdditiveGaussainT(torchfd.mutual_information.MINE):
+    def __init__(self, p: float=0.1, marginalizer=None) -> None:
+        super().__init__(marginalizer=marginalizer)
 
         self.p_logit = torch.nn.Parameter(torch.logit(torch.tensor(p)), requires_grad=True)
         self.bias = 1.0 # From optimal solution for NWJ
-        
-    def forward(self, x: torch.tensor, y: torch.tensor, marginalize: bool=False) -> torch.tensor:
-        x, y = super().forward(x, y, marginalize)
 
+    @torchfd.mutual_information.MINE.marginalized
+    def forward(self, x: torch.tensor, y: torch.tensor) -> torch.tensor:
         p = torch.sigmoid(self.p_logit)
         p_squared = p**2
         
@@ -23,19 +22,18 @@ class AdditiveGaussainT(torchkld.mutual_information.MINE):
         return result
 
 
-class AffineAdditiveGaussainT(torchkld.mutual_information.MINE):
-    def __init__(self, dim: int, p: float=0.1) -> None:
-        super().__init__()
+class AffineAdditiveGaussainT(torchfd.mutual_information.MINE):
+    def __init__(self, dim: int, p: float=0.1, marginalizer=None) -> None:
+        super().__init__(marginalizer=marginalizer)
 
         self.p_logit = torch.nn.Parameter(torch.logit(torch.tensor(p)), requires_grad=True)
         self.bias = 1.0 # From optimal solution for NWJ
 
         self.linear_X = torch.nn.Linear(dim, dim)
         self.linear_Y = torch.nn.Linear(dim, dim)
-        
-    def forward(self, x: torch.tensor, y: torch.tensor, marginalize: bool=False) -> torch.tensor:
-        x, y = super().forward(x, y, marginalize)
 
+    @torchfd.mutual_information.MINE.marginalized
+    def forward(self, x: torch.tensor, y: torch.tensor) -> torch.tensor:
         x = self.linear_X(x)
         y = self.linear_X(y)
 
@@ -48,9 +46,9 @@ class AffineAdditiveGaussainT(torchkld.mutual_information.MINE):
         return result
 
 
-class DenseT(torchkld.mutual_information.MINE):
-    def __init__(self, X_dim: int, Y_dim: int, inner_dim: int=256) -> None:
-        super().__init__()
+class DenseT(torchfd.mutual_information.MINE):
+    def __init__(self, X_dim: int, Y_dim: int, inner_dim: int=256, marginalizer=None) -> None:
+        super().__init__(marginalizer=marginalizer)
 
         self.model = torch.nn.Sequential(
             torch.nn.Linear(X_dim + Y_dim, inner_dim),
@@ -59,16 +57,15 @@ class DenseT(torchkld.mutual_information.MINE):
             torch.nn.LeakyReLU(),
             torch.nn.Linear(inner_dim, 1)
         )        
-        
-    def forward(self, x: torch.tensor, y: torch.tensor, marginalize: bool=False) -> torch.tensor:
-        x, y = super().forward(x, y, marginalize) 
-        
+
+    @torchfd.mutual_information.MINE.marginalized
+    def forward(self, x: torch.tensor, y: torch.tensor) -> torch.tensor:
         return self.model(torch.cat((x, y), dim=1))
 
 
-class SeparableT(torchkld.mutual_information.MINE):
-    def __init__(self, X_dim: int, Y_dim: int, inner_dim: int=128, output_dim: int=64) -> None:
-        super().__init__()
+class SeparableT(torchfd.mutual_information.MINE):
+    def __init__(self, X_dim: int, Y_dim: int, inner_dim: int=128, output_dim: int=64, marginalizer=None) -> None:
+        super().__init__(marginalizer=marginalizer)
         
         self.projector_x = torch.nn.Sequential(
             torch.nn.Linear(X_dim, inner_dim),
@@ -84,10 +81,9 @@ class SeparableT(torchkld.mutual_information.MINE):
             torch.nn.Linear(inner_dim, output_dim),
             #torch.nn.BatchNorm1d(output_dim),
         )        
-        
-    def forward(self, x: torch.tensor, y: torch.tensor, marginalize: bool=False) -> torch.tensor:
-        x, y = super().forward(x, y, marginalize)
-        
+
+    @torchfd.mutual_information.MINE.marginalized
+    def forward(self, x: torch.tensor, y: torch.tensor) -> torch.tensor:        
         # Projection.
         x = self.projector_x(x)
         y = self.projector_y(y)

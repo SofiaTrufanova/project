@@ -88,7 +88,7 @@ def plot_embeddings(embeddings: np.array, labels: np.array,
     ax.grid(color='#000000', alpha=0.15, linestyle='-', linewidth=1, which='major')
     ax.grid(color='#000000', alpha=0.1, linestyle='-', linewidth=0.5, which='minor')
 
-    ax.set_title("Embedding space plot")
+    #ax.set_title("Embedding space plot")
     ax.set_xlabel("x")
     ax.set_ylabel("y")
 

@@ -1,5 +1,5 @@
 import torch
-import torchkld
+import torchfd
 import numpy as np
 import pandas as pd
 
@@ -62,14 +62,15 @@ def convert_to_embeddings(embedder, dataloader, device):
     return embeddings_all, y_all
 
 
-def train_infomax_embedder(infomax_embedder, train_dataloader, test_dataloader, device,
-                           n_epochs=500,
-                           loss=torchkld.loss.InfoNCELoss(),
-                           marginalize="product",
-                           optimizer_embedder_network=lambda params: torch.optim.Adam(params, lr=1.0e-3),
-                           optimizer_discriminator_network=lambda params: torch.optim.Adam(params, lr=1.0e-3),
-                           callback: callable=None,
-                           distribution: str="normal"):
+def train_infomax_embedder(
+    infomax_embedder, train_dataloader, test_dataloader, device,
+    n_epochs=500,
+    loss=torchfd.loss.InfoNCELoss(),
+    optimizer_embedder_network=lambda params: torch.optim.Adam(params, lr=1.0e-3),
+    optimizer_discriminator_network=lambda params: torch.optim.Adam(params, lr=1.0e-3),
+    callback: callable=None,
+    distribution: str="normal"
+):
     
     history = defaultdict(lambda: defaultdict(list))
 
@@ -88,8 +89,7 @@ def train_infomax_embedder(infomax_embedder, train_dataloader, test_dataloader, 
             x, y = batch
             x = x.to(device)
             
-            _loss = loss(*infomax_embedder(x, marginalize=marginalize))
-            #_loss = loss(infomax_embedder(x, marginalize=False))
+            _loss = loss(*infomax_embedder(x))
             _loss.backward()
 
             optimizer_embedder_network.step()
