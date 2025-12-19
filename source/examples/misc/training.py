@@ -33,6 +33,7 @@ from sklearn.metrics import accuracy_score, f1_score, roc_auc_score
 
 # Statistical tests for distributions
 import scipy.stats as sps
+import pingouin
 
 from .plots import plot_history, plot_embeddings
 from .statistics import *
