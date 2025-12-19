@@ -1,6 +1,6 @@
 import torch
 import math
-from .mutual_information import MINE
+from torchfd.mutual_information import MINE
 
 
 import numpy
