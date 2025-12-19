@@ -1,7 +1,7 @@
 import math
 import torch
 import torchfd
-import infomax
+from misc import infomax
 
 
 class AdditiveGaussainT(torchfd.mutual_information.MINE):
