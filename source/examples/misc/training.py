@@ -3,7 +3,7 @@ import torchfd
 import numpy as np
 import pandas as pd
 
-import infomax
+from misc import infomax
 
 from collections import defaultdict
 
