@@ -7,7 +7,6 @@ import torch.nn.functional as F
 
 # new code
 
-
 class LinearT(nn.Module):
     def __init__(self, dim_x, dim_y):
         super().__init__()
@@ -52,7 +51,6 @@ class DeepMLPT(nn.Module):
     def forward(self, x, y):
         h = torch.cat([x, y], dim=-1)
         h = F.relu(self.input(h))
-        # простой residual по парам слоев
         for i in range(0, len(self.blocks), 2):
             h_res = h
             h = self.blocks[i](h)
