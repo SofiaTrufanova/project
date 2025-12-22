@@ -116,20 +116,20 @@ def train_infomax_embedder(
         if not (callback is None):
             callback(history, epoch, step, infomax_embedder, train_dataloader, test_dataloader, device)
 
-        # Plots.
-        for name, subhistory in history.items():
-            plot_history(subhistory, title=name)
+        # # Plots.
+        # for name, subhistory in history.items():
+        #     plot_history(subhistory, title=name)
 
         with torch.no_grad():
             infomax_embedder.embedder_network.eval()
             
             x_lim = y_lim = (-3.0, 3.0) if distribution == "normal" else (-0.1, 1.1)
             x, y = next(iter(train_dataloader))
-            plot_embeddings(infomax_embedder.embedder_network(x.to(device)).detach().cpu().numpy(), y.detach().cpu().numpy(), x_lim=x_lim, y_lim=y_lim)
+            # plot_embeddings(infomax_embedder.embedder_network(x.to(device)).detach().cpu().numpy(), y.detach().cpu().numpy(), x_lim=x_lim, y_lim=y_lim)
                 
             infomax_embedder.embedder_network.train()
 
-        plt.show();
+        # plt.show();
         
     return history
 
